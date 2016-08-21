@@ -64,6 +64,10 @@ describe('typeahead tests', function() {
     return findDropDown(element).find('li');
   };
 
+  var findClearBtn = function(element) {
+    return element.find('.glyphicon-remove');
+  };
+
   var triggerKeyDown = function(element, keyCode, options) {
     options = options || {};
     var inputEl = findInput(element);
@@ -230,6 +234,45 @@ describe('typeahead tests', function() {
       changeInputValueTo(element, 'f');
       triggerKeyDown(element, 13);
       expect($scope.result).toEqual('prefixfoo');
+    });
+
+    it('should display X button after some option selected', function() {
+      $scope.updaterFn = function(selectedItem) {
+        return 'prefix' + selectedItem;
+      };
+      var element = prepareInputEl('<div><input ng-model="result" uib-typeahead="updaterFn(item) as item for item in source | filter:$viewValue"></div>');
+      changeInputValueTo(element, 'f');
+      triggerKeyDown(element, 13);
+      expect($scope.result).toEqual('prefixfoo');
+      var clearBtn = findClearBtn(element);
+      expect(clearBtn).not.toHaveClass('ng-hide');
+    });
+
+    it('should hide X button when selected item removed and input got empty', function() {
+      $scope.updaterFn = function(selectedItem) {
+        return 'prefix' + selectedItem;
+      };
+      var element = prepareInputEl('<div><input ng-model="result" uib-typeahead="updaterFn(item) as item for item in source | filter:$viewValue"></div>');
+      changeInputValueTo(element, 'f');
+      triggerKeyDown(element, 13);
+      expect($scope.result).toEqual('prefixfoo');
+      var clearBtn = findClearBtn(element);
+      changeInputValueTo(element, '');
+      expect(clearBtn).toHaveClass('ng-hide');
+    });
+
+    it('when pressing X button should clear the ngModel', function() {
+      $scope.updaterFn = function(selectedItem) {
+        return 'prefix' + selectedItem;
+      };
+      var element = prepareInputEl('<div><input ng-model="result" uib-typeahead="updaterFn(item) as item for item in source | filter:$viewValue"></div>');
+      changeInputValueTo(element, 'f');
+      triggerKeyDown(element, 13);
+      expect($scope.result).toEqual('prefixfoo');
+      var clearBtn = findClearBtn(element);
+      clearBtn.click();
+      $scope.$digest();
+      expect($scope.result).toEqual('');
     });
 
     it('should support custom label rendering function', function() {

@@ -162,6 +162,17 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
 
     //pop-up element used to display matches
     var popUpEl = angular.element('<div uib-typeahead-popup></div>');
+
+    var clearBtnEl = angular.element('<span></span>');
+    clearBtnEl.attr({
+      'class': 'glyphicon glyphicon-remove',
+      'style': 'position: absolute; cursor: pointer;',
+      'ng-style': '{top: positionClearBtn.top+\'px\', left: positionClearBtn.left +\'px\'}',
+      'ng-click': 'clearModel()',
+      'ng-show': 'showClearBtn'
+    });
+
+
     popUpEl.attr({
       id: popupId,
       matches: 'matches',
@@ -319,6 +330,9 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
     function recalculatePosition() {
       scope.position = appendToBody ? $position.offset(element) : $position.position(element);
       scope.position.top += element.prop('offsetHeight');
+      scope.positionClearBtn = $position.position(element);
+      scope.positionClearBtn.top += element.prop('offsetHeight') / 4;
+      scope.positionClearBtn.left += element.prop('offsetWidth') - 20;
     }
 
     //we need to propagate user's query so we can higlight matches
@@ -340,7 +354,11 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
     };
 
     resetMatches();
-
+    //method for clear blutton
+    scope.clearModel = function() {
+      $setModelValue(originalScope, '');
+      scope.showClearBtn = false;
+    };
     scope.assignIsOpen = function (isOpen) {
       isOpenSetter(originalScope, isOpen);
     };
@@ -351,6 +369,8 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       var model, item;
 
       selected = true;
+
+      scope.showClearBtn = true; // Indicator that some choice selected (clear  button should appear)
       locals[parserResult.itemName] = item = scope.matches[activeIdx].model;
       model = parserResult.modelMapper(originalScope, locals);
       $setModelValue(originalScope, model);
@@ -498,6 +518,7 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
     });
 
     var $popup = $compile(popUpEl)(scope);
+    var $clearBtn = $compile(clearBtnEl)(scope);
 
     if (appendToBody) {
       $document.find('body').append($popup);
@@ -506,6 +527,7 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
     } else {
       element.after($popup);
     }
+    element.after($clearBtn);
 
     this.init = function(_modelCtrl, _ngModelOptions) {
       modelCtrl = _modelCtrl;
@@ -529,6 +551,9 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
           isLoadingSetter(originalScope, false);
           cancelPreviousTimeout();
           resetMatches();
+          if (!inputValue) {
+            scope.showClearBtn = false; // Hide clear button if input empty
+          }
         }
 
         if (isEditable) {
